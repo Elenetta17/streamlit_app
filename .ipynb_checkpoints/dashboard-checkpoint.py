@@ -14,5 +14,7 @@ selected_client = st.sidebar.selectbox('Clients_id', sorted_client_list)
 
 url = 'http://127.0.0.1:3000/predict'
 client_id = str(selected_client)
-x = requests.post(url, data = client_id)
-st.write(x.text)
+prediction = requests.post(url, data = client_id)
+print(prediction)
+st.write("""
+## Probabilité de remboursement: """ + prediction.text + " %")
