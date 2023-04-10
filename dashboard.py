@@ -8,16 +8,25 @@ import pickle
 
 
 X_test_reduced = pd.read_csv('../X_test_reduced.csv', index_col=0) 
+#explainer = pickle.load(open('../explainer.pkl', 'rb'))
+#shap_values = explainer.shap_values(X_test_reduced)
+
+@st.cache_data  # 👈 Add the caching decorator
+def load_shap_values(path, df):
+    explainer = pickle.load(open(path, 'rb'))
+    shap_values = explainer.shap_values(df)
+    return explainer, shap_values
+
+explainer, shap_values = load_shap_values('../explainer.pkl', X_test_reduced)
 
 st.write("""
 # Modèle de scoring""")
 
 
 """"""
-
-client_list = requests.get('http://127.0.0.1:3000/get_clients_id').json()['data']
-sorted_client_list = sorted(client_list)
-selected_client = st.sidebar.selectbox('Clients_id', sorted_client_list)
+# création liste clients
+client_list = sorted(X_test_reduced.index)
+selected_client = st.sidebar.selectbox('Clients_id', client_list)
 
 
 url = 'http://127.0.0.1:3000/predict'
@@ -29,8 +38,7 @@ st.write("""
 
 st.write("""
 ## Explication de la prediction:""")
-explainer = pickle.load(open('../explainer.pkl', 'rb'))
-shap_values = explainer.shap_values(X_test_reduced)
+
 shap_object = shap.Explanation(base_values = explainer.expected_value[0],
 values = shap_values[0],
 feature_names = X_test_reduced.columns,
