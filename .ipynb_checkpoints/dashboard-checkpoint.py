@@ -100,16 +100,15 @@ for feature in features_to_show:
             st.write("""**"""+feature+""":** Non""")
 
 
-
-
 st.write("""
-## Explication de la prediction:""")
+## Caractéristiques influençant le score""")
+col3, col4 = st.columns(2)
 
 shap_object = shap.Explanation(base_values = explainer.expected_value[0],
 values = shap_values[0],
 feature_names = X_test_reduced.columns,
 data = X_test_reduced)
-fig1, ax1 = plt.subplots(2,1, figsize=(15,20))
+fig1, ax1 = plt.subplots(2,1)
 plt.subplot(2, 1 ,1)
 shap.summary_plot(shap_values[0], X_test_reduced,  max_display=10, show=False)
 plt.subplot(2, 1, 2)
@@ -118,20 +117,22 @@ plt.tight_layout()
 st.pyplot(fig1)
 
 # Store the list of columns
-columns_to_plot = ['EXT_SOURCE_2', 'EXT_SOURCE_3', 'INSTAL_AMT_PAYMENT_SUM', 'DAYS_EMPLOYED',
-                    'NAME_EDUCATION_TYPE_Higher education', 'INSTAL_DPD_MEAN','POS_COUNT', 'DAYS_BIRTH','AMT_CREDIT','AMT_ANNUITY'
-                                 ]
+                                 
 st.write("""
 ## Positionnement du client par rapport à l'ensamble de clients """)
 # boxplots
-fig, ax = plt.subplots((len(columns_to_plot)+1)//2, 2, figsize=(15, 15))
+fig, ax = plt.subplots((len(features_to_show)+1)//2, 2, figsize=(15, 15))
 count = 1
-for col in columns_to_plot:
-    plt.subplot((len(columns_to_plot)+1)//2, 2, count)
+for col in features_to_show:
+    plt.subplot((len(features_to_show)+1)//2, 2, count)
     plt.title(col)
-    sns.boxplot(data=X_test_reduced, x=col, showfliers=False)
-    plt.scatter(X_test_reduced.loc[selected_client, col],0, linewidths=5, c='red')
-    plt.text(X_test_reduced.loc[selected_client, col],-0.1, "CLIENT")
+    plt.hist(X_test_reduced[col])
+    plt.axvline(X_test_reduced.loc[selected_client, col], color='red', linestyle='dashed', linewidth=1)
+    #plt.scatter(X_test_reduced.loc[selected_client, col],0, linewidths=5, c='red')
+    min_ylim, max_ylim = plt.ylim()
+    plt.text(X_test_reduced.loc[selected_client, col], max_ylim*0.9, "CLIENT")
     count += 1
+if len(features_to_show)%2 !=0:
+    fig.delaxes(ax[(len(features_to_show)+1)//2-1][1])
 plt.tight_layout()
 st.pyplot(fig)
