@@ -33,7 +33,19 @@ selected_client = st.sidebar.selectbox('Clients_id', client_list)
 
 #creation liste variables pur le sidebar
 features_to_show = st.sidebar.multiselect('Variables', sorted(X_test_reduced.columns), default = ['EXT_SOURCE_2', 'EXT_SOURCE_3', 'INSTAL_AMT_PAYMENT_SUM', 'DAYS_EMPLOYED',
-                    'NAME_EDUCATION_TYPE_Higher education', 'INSTAL_DPD_MEAN'])
+                    'NAME_EDUCATION_TYPE_Higher education', 'INSTAL_DPD_MEAN'],
+                                         max_selections=10)
+
+categorical=['PREV_NAME_YIELD_GROUP_high_MEAN',
+'NAME_EDUCATION_TYPE_Higher education',
+'PREV_NAME_CONTRACT_TYPE_Cash loans_MEAN',
+       'PREV_NAME_CONTRACT_TYPE_Consumer loans_MEAN',
+       'PREV_NAME_CONTRACT_STATUS_Refused_MEAN',
+       'PREV_NAME_CLIENT_TYPE_New_MEAN', 'PREV_NAME_PORTFOLIO_POS_MEAN',
+       'PREV_NAME_YIELD_GROUP_high_MEAN',
+       'PREV_NAME_YIELD_GROUP_low_normal_MEAN',
+       'PREV_NAME_YIELD_GROUP_middle_MEAN',
+       'PREV_PRODUCT_COMBINATION_Cash_MEAN']
 
 
 url = 'http://127.0.0.1:3000/predict'
@@ -75,6 +87,17 @@ fig.update_layout(
 col2.plotly_chart(fig)
 
 
+st.write("""
+## Information relatives au client """ + str(selected_client))
+
+for feature in features_to_show:
+    if feature not in categorical:
+        st.write("""**"""+feature+""":** """ + str(X_test_reduced.loc[selected_client, feature]))
+    else:
+        if X_test_reduced.loc[selected_client, feature] > 0.5:
+            st.write("""**"""+feature+""":** Yes""")
+        else:
+            st.write("""**"""+feature+""":** Non""")
 
 
 
