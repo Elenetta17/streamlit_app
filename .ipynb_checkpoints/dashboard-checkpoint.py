@@ -5,6 +5,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import shap
 import pickle
+import plotly.graph_objects as go
 
 
 X_test_reduced = pd.read_csv('../X_test_reduced.csv', index_col=0) 
@@ -20,10 +21,12 @@ def load_shap_values(path, df):
 explainer, shap_values = load_shap_values('../explainer.pkl', X_test_reduced)
 
 st.write("""
-# Modèle de scoring""")
+# Dashboard Scoring Credit""")
 
 
 """"""
+
+
 # création liste clients
 client_list = sorted(X_test_reduced.index)
 selected_client = st.sidebar.selectbox('Clients_id', client_list)
@@ -34,7 +37,36 @@ client_id = str(selected_client)
 prediction = requests.post(url, data = client_id)
 print(prediction)
 st.write("""
-## Probabilité de remboursement: """ + prediction.text + " %")
+## Prédiction """)
+col1, col2 = st.columns([3, 1])
+
+"""Prédictions"""
+
+fig = go.Figure(go.Indicator(
+    mode = "gauge+number",
+    value = int(prediction.text),
+    number= { 'suffix': "%", 'font':{'color':'dimgrey'}},
+    domain = {'x': [0, 1], 'y': [0, 1]},
+    title = {'text': "Probabilité de remboursement", 'font':{'color':'dimgrey' }},
+    gauge = {
+        'axis': {'range': [None, 100], 'tickwidth': 1, 'tickcolor': "dimgrey", 'tickfont':{'color':'dimgrey' }},
+        'bar': {'color': "dimgrey"},
+        'steps': [
+            {'range': [0, 45], 'color': 'red'},
+            {'range': [45, 100], 'color': 'green'}],
+    }))
+fig.update_layout(
+    margin=dict(l=30, t=50, r=30, b=0),
+    height=250,
+    width=300
+    #margin={'b': 70},
+    #height=150,
+)
+col1.plotly_chart(fig)
+
+col2.header("""Client """ + client_id)
+
+
 
 st.write("""
 ## Explication de la prediction:""")
