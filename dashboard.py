@@ -31,6 +31,10 @@ st.write("""
 client_list = sorted(X_test_reduced.index)
 selected_client = st.sidebar.selectbox('Clients_id', client_list)
 
+#creation liste variables pur le sidebar
+features_to_show = st.sidebar.multiselect('Variables', sorted(X_test_reduced.columns), default = ['EXT_SOURCE_2', 'EXT_SOURCE_3', 'INSTAL_AMT_PAYMENT_SUM', 'DAYS_EMPLOYED',
+                    'NAME_EDUCATION_TYPE_Higher education', 'INSTAL_DPD_MEAN'])
+
 
 url = 'http://127.0.0.1:3000/predict'
 client_id = str(selected_client)
