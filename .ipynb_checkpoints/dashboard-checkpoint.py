@@ -38,9 +38,15 @@ prediction = requests.post(url, data = client_id)
 print(prediction)
 st.write("""
 ## Prédiction """)
-col1, col2 = st.columns([3, 1])
 
-"""Prédictions"""
+col1, col2 = st.columns(2)
+
+# Prédictions
+
+etat_client = 'Client peu risqué' if int(prediction.text) < 0.55 else 'Client à risque de defaut'
+col1.subheader("""Client """ + client_id)
+col1.write("""Probabilité de remboursement: """ + prediction.text +"%")
+col1.write("""Etat client: **""" + etat_client + """**""")
 
 fig = go.Figure(go.Indicator(
     mode = "gauge+number",
@@ -52,8 +58,8 @@ fig = go.Figure(go.Indicator(
         'axis': {'range': [None, 100], 'tickwidth': 1, 'tickcolor': "dimgrey", 'tickfont':{'color':'dimgrey' }},
         'bar': {'color': "dimgrey"},
         'steps': [
-            {'range': [0, 45], 'color': 'red'},
-            {'range': [45, 100], 'color': 'green'}],
+            {'range': [0, 55], 'color': 'red'},
+            {'range': [55, 100], 'color': 'green'}],
     }))
 fig.update_layout(
     margin=dict(l=30, t=50, r=30, b=0),
@@ -62,9 +68,10 @@ fig.update_layout(
     #margin={'b': 70},
     #height=150,
 )
-col1.plotly_chart(fig)
+col2.plotly_chart(fig)
 
-col2.header("""Client """ + client_id)
+
+
 
 
 
