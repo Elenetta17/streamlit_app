@@ -1,34 +1,47 @@
-import pandas as pd
-import streamlit as st
-import requests
-import seaborn as sns
+from streamlit_shap import st_shap
 import matplotlib.pyplot as plt
-import shap
+import pandas as pd
 import pickle
 import plotly.graph_objects as go
+import requests
+import seaborn as sns
+import shap
+import streamlit as st
 
 
-X_test_reduced = pd.read_csv('../X_test_reduced.csv', index_col=0) 
-#explainer = pickle.load(open('../explainer.pkl', 'rb'))
-#shap_values = explainer.shap_values(X_test_reduced)
+@st.cache_data # caching
+def load_dataframe(path):
+    """This function take as input the path(string) of a csv
+    file and return the dataframe"""
+    data = pd.read_csv(path, index_col=0)
+    return data
 
 @st.cache_data  # 👈 Add the caching decorator
 def load_shap_values(path, df):
+    """This function take as input the path(string) of a shap explainer
+    and a dataframe and return the explainer and the correspondent shap
+    values of the dataframe"""
     explainer = pickle.load(open(path, 'rb'))
     shap_values = explainer.shap_values(df)
     return explainer, shap_values
 
-explainer, shap_values = load_shap_values('../explainer.pkl', X_test_reduced)
+@st.cache_data # caching
+def load_client_list(data):
+    """This function take as input ta dataframe
+    and return the index in ascending order"""
+    return sorted(data.index)
+
+# chargement dataframe
+X_test_reduced = load_dataframe('X_test_reduced.csv') 
+
+# chargement explainer et shap values
+explainer, shap_values = load_shap_values('explainer.pkl', X_test_reduced)
 
 st.write("""
 # Dashboard Scoring Credit""")
 
-
-""""""
-
-
 # création liste clients
-client_list = sorted(X_test_reduced.index)
+client_list = load_client_list(X_test_reduced)
 selected_client = st.sidebar.selectbox('Clients_id', client_list)
 
 #creation liste variables pur le sidebar
@@ -99,22 +112,16 @@ for feature in features_to_show:
         else:
             st.write("""**"""+feature+""":** Non""")
 
-
-st.write("""
-## Caractéristiques influençant le score""")
-col3, col4 = st.columns(2)
-
 shap_object = shap.Explanation(base_values = explainer.expected_value[0],
 values = shap_values[0],
 feature_names = X_test_reduced.columns,
 data = X_test_reduced)
-fig1, ax1 = plt.subplots(2,1)
-plt.subplot(2, 1 ,1)
-shap.summary_plot(shap_values[0], X_test_reduced,  max_display=10, show=False)
-plt.subplot(2, 1, 2)
-shap.plots.waterfall(shap_object[X_test_reduced.index.get_loc(selected_client)], max_display=10)
-plt.tight_layout()
-st.pyplot(fig1)
+
+st.write("""
+## Caractéristiques influençant le score""")
+st_shap(shap.summary_plot(shap_values[0], X_test_reduced,  max_display=10, show=False))
+st_shap(shap.plots.waterfall(shap_object[X_test_reduced.index.get_loc(selected_client)], max_display=10)
+)
 
 # Store the list of columns
                                  
