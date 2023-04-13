@@ -32,34 +32,36 @@ def load_client_list(data):
     return sorted(data.index)
 
 # chargement dataframe
-X_test_reduced = load_dataframe('X_test_reduced.csv') 
+X_test_reduced = load_dataframe('test_kaggle_reduced.csv') 
 
 # chargement explainer et shap values
 explainer, shap_values = load_shap_values('explainer.pkl', X_test_reduced)
 
+categorical_columns=[
+    'PREV_NAME_YIELD_GROUP_high_MEAN',
+    'NAME_EDUCATION_TYPE_Higher education',
+    'PREV_NAME_CONTRACT_TYPE_Cash loans_MEAN',
+    'PREV_NAME_CONTRACT_TYPE_Consumer loans_MEAN',
+    'PREV_NAME_CONTRACT_STATUS_Refused_MEAN',
+    'PREV_NAME_CLIENT_TYPE_New_MEAN',
+    'PREV_NAME_PORTFOLIO_POS_MEAN',
+    'PREV_NAME_YIELD_GROUP_high_MEAN',
+    'PREV_NAME_YIELD_GROUP_low_normal_MEAN',
+    'PREV_NAME_YIELD_GROUP_middle_MEAN',
+    'PREV_PRODUCT_COMBINATION_Cash_MEAN']
+
+# application title
 st.write("""
 # Dashboard Scoring Credit""")
 
-# création liste clients
+# add client list to sidebar
 client_list = load_client_list(X_test_reduced)
 selected_client = st.sidebar.selectbox('Clients_id', client_list)
 
-#creation liste variables pur le sidebar
+# add features to sidebar
 features_to_show = st.sidebar.multiselect('Variables', sorted(X_test_reduced.columns), default = ['EXT_SOURCE_2', 'EXT_SOURCE_3', 'INSTAL_AMT_PAYMENT_SUM', 'DAYS_EMPLOYED',
                     'NAME_EDUCATION_TYPE_Higher education', 'INSTAL_DPD_MEAN'],
                                          max_selections=10)
-
-categorical=['PREV_NAME_YIELD_GROUP_high_MEAN',
-'NAME_EDUCATION_TYPE_Higher education',
-'PREV_NAME_CONTRACT_TYPE_Cash loans_MEAN',
-       'PREV_NAME_CONTRACT_TYPE_Consumer loans_MEAN',
-       'PREV_NAME_CONTRACT_STATUS_Refused_MEAN',
-       'PREV_NAME_CLIENT_TYPE_New_MEAN', 'PREV_NAME_PORTFOLIO_POS_MEAN',
-       'PREV_NAME_YIELD_GROUP_high_MEAN',
-       'PREV_NAME_YIELD_GROUP_low_normal_MEAN',
-       'PREV_NAME_YIELD_GROUP_middle_MEAN',
-       'PREV_PRODUCT_COMBINATION_Cash_MEAN']
-
 
 url = 'http://127.0.0.1:3000/predict'
 client_id = str(selected_client)
@@ -104,7 +106,7 @@ st.write("""
 ## Information relatives au client """ + str(selected_client))
 
 for feature in features_to_show:
-    if feature not in categorical:
+    if feature not in categorical_columns:
         st.write("""**"""+feature+""":** """ + str(X_test_reduced.loc[selected_client, feature]))
     else:
         if X_test_reduced.loc[selected_client, feature] > 0.5:
