@@ -62,7 +62,8 @@ features_to_show = st.sidebar.multiselect('Variables', sorted(X_test_reduced.col
                     'NAME_EDUCATION_TYPE_Higher education', 'INSTAL_DPD_MEAN'],
                                          max_selections=10)
 
-url = 'http://127.0.0.1:3000/predict'
+#url = 'http://127.0.0.1:3000/predict'
+url= 'https://elena-openclassrooms-predict.herokuapp.com/predict'
 client_id = str(selected_client)
 prediction = requests.post(url, data = client_id)
 print(prediction)
