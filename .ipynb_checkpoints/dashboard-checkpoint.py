@@ -31,11 +31,12 @@ def load_client_list(data):
     return sorted(data.index)
 
 # chargement dataframe
-X_test_reduced = load_dataframe('test_kaggle_reduced.csv') 
+data = load_dataframe('test_kaggle_reduced.csv') 
 
 # chargement explainer et shap values
-explainer, shap_values = load_shap_values('explainer.pkl', X_test_reduced)
+explainer, shap_values = load_shap_values('explainer.pkl', data)
 
+# categorical variables
 categorical_columns=[
     'PREV_NAME_YIELD_GROUP_high_MEAN',
     'NAME_EDUCATION_TYPE_Higher education',
@@ -53,32 +54,35 @@ categorical_columns=[
 st.write("""
 # Dashboard Scoring Credit""")
 
+### SIDEBAR
 # add client list to sidebar
-client_list = load_client_list(X_test_reduced)
+client_list = load_client_list(data)
 selected_client = st.sidebar.selectbox('Clients_id', client_list)
 
 # add features to sidebar
-features_to_show = st.sidebar.multiselect('Variables', sorted(X_test_reduced.columns), default = ['EXT_SOURCE_2', 'EXT_SOURCE_3', 'INSTAL_AMT_PAYMENT_SUM', 'DAYS_EMPLOYED',
+features_to_show = st.sidebar.multiselect('Variables', sorted(data.columns), default = ['EXT_SOURCE_2', 'EXT_SOURCE_3', 'INSTAL_AMT_PAYMENT_SUM', 'DAYS_EMPLOYED',
                     'NAME_EDUCATION_TYPE_Higher education', 'INSTAL_DPD_MEAN'],
                                          max_selections=10)
-
-#url = 'http://127.0.0.1:3000/predict'
-url= 'https://elena-openclassrooms-predict.herokuapp.com/predict'
-client_id = str(selected_client)
-prediction = requests.post(url, data = client_id)
-print(prediction)
+#=======================================================================#
+### PREDICTION ####
 st.write("""
 ## Prédiction """)
 
+# get prediction
+#url = 'http://127.0.0.1:3000/predict'
+url= 'https://elena-openclassrooms-predict.herokuapp.com/predict'
+client_id = str(selected_client)
+prediction = requests.post(url, data=client_id)
+
 col1, col2 = st.columns(2)
 
-# Prédictions
-
-etat_client = 'Client peu risqué' if int(prediction.text) < 0.55 else 'Client à risque de defaut'
+# Showing client state and probability 
+etat_client = 'Client peu risqué' if int(prediction.text) > 50 else 'Client à risque de defaut'
 col1.subheader("""Client """ + client_id)
 col1.write("""Probabilité de remboursement: """ + prediction.text +"%")
 col1.write("""Etat client: **""" + etat_client + """**""")
 
+# Gauge graph
 fig = go.Figure(go.Indicator(
     mode = "gauge+number",
     value = int(prediction.text),
@@ -89,8 +93,8 @@ fig = go.Figure(go.Indicator(
         'axis': {'range': [None, 100], 'tickwidth': 1, 'tickcolor': "dimgrey", 'tickfont':{'color':'dimgrey' }},
         'bar': {'color': "dimgrey"},
         'steps': [
-            {'range': [0, 55], 'color': 'red'},
-            {'range': [55, 100], 'color': 'green'}],
+            {'range': [0, 50], 'color': 'red'},
+            {'range': [50, 100], 'color': 'green'}],
     }))
 fig.update_layout(
     margin=dict(l=30, t=50, r=30, b=0),
@@ -100,29 +104,33 @@ fig.update_layout(
     #height=150,
 )
 col2.plotly_chart(fig)
-
+#=======================================================================#
+### CLIENT INFO ###
 
 st.write("""
-## Information relatives au client """ + str(selected_client))
+## Informations relatives au client """ + str(selected_client))
 
+# list the values of selected features
 for feature in features_to_show:
     if feature not in categorical_columns:
-        st.write("""**"""+feature+""":** """ + str(X_test_reduced.loc[selected_client, feature]))
-    else:
-        if X_test_reduced.loc[selected_client, feature] > 0.5:
-            st.write("""**"""+feature+""":** Yes""")
+        st.write("""**"""+feature+""":** """ + str(data.loc[selected_client, feature]))
+    else:  # if feature is categorical, display Yes or No
+        if data.loc[selected_client, feature] > 0.5:
+            st.write("""**"""+feature+""":** Oui""")
         else:
             st.write("""**"""+feature+""":** Non""")
+            
+#=======================================================================#
 
 shap_object = shap.Explanation(base_values = explainer.expected_value[0],
 values = shap_values[0],
-feature_names = X_test_reduced.columns,
-data = X_test_reduced)
+feature_names = data.columns,
+data = data)
 
 st.write("""
 ## Caractéristiques influençant le score""")
-st_shap(shap.summary_plot(shap_values[0], X_test_reduced,  max_display=10, show=False))
-st_shap(shap.plots.waterfall(shap_object[X_test_reduced.index.get_loc(selected_client)], max_display=10)
+st_shap(shap.summary_plot(shap_values[0], data,  max_display=10, show=False))
+st_shap(shap.plots.waterfall(shap_object[data.index.get_loc(selected_client)], max_display=10)
 )
 
 # Store the list of columns
@@ -135,11 +143,10 @@ count = 1
 for col in features_to_show:
     plt.subplot((len(features_to_show)+1)//2, 2, count)
     plt.title(col)
-    plt.hist(X_test_reduced[col])
-    plt.axvline(X_test_reduced.loc[selected_client, col], color='red', linestyle='dashed', linewidth=1)
-    #plt.scatter(X_test_reduced.loc[selected_client, col],0, linewidths=5, c='red')
+    plt.hist(data[col])
+    plt.axvline(data.loc[selected_client, col], color='red', linestyle='dashed', linewidth=1)
     min_ylim, max_ylim = plt.ylim()
-    plt.text(X_test_reduced.loc[selected_client, col], max_ylim*0.9, "CLIENT")
+    plt.text(data.loc[selected_client, col], max_ylim*0.9, "CLIENT")
     count += 1
 if len(features_to_show)%2 !=0:
     fig.delaxes(ax[(len(features_to_show)+1)//2-1][1])
