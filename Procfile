@@ -1,1 +1,1 @@
-web: gunicorn elena-openclassrooms-dashboard:app
+web: gunicorn app:app
