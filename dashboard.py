@@ -69,72 +69,88 @@ categorical_columns = [
     'PREV_NAME_YIELD_GROUP_low_normal_MEAN',
     'PREV_NAME_YIELD_GROUP_middle_MEAN'
 ]
+
 # ======================================================================================= #
+# TITLE
 
 # application title
-st.write("""
-# Dashboard Scoring Credit""")
+st.write("# Dashboard Scoring Credit")
 
-### SIDEBAR
+# ======================================================================================= #
+# SIDEBAR
+
 # add client list to sidebar
 client_list = load_client_list(data)
-selected_client = st.sidebar.selectbox('Sélectionner l\'ID client', client_list)
+selected_client = st.sidebar.selectbox(
+    "**Sélectionner l\'ID client**",
+    client_list
+)
 
-# add features to sidebar
-features_to_show = st.sidebar.multiselect('Variables', sorted(data.columns),
-                                          default = [
-                                              'AMT_CREDIT',
- 'BURO_DAYS_CREDIT_ENDDATE_MAX',
- 'DAYS_BIRTH',
- 'DAYS_EMPLOYED',
- 'EXT_SOURCE_2',
- 'EXT_SOURCE_3',
- 'NAME_EDUCATION_TYPE_Higher education',
- 'PAYMENT_RATE',
- 'PREV_CNT_PAYMENT_MEAN',
- 'PREV_NAME_YIELD_GROUP_high_MEAN'],
-                                         max_selections=10)
-#=======================================================================#
-### PREDICTION ####
-st.write("""
-## Prédiction """)
+# add features list to sidebar
+features_to_show = st.sidebar.multiselect(
+    '**Variables**',
+    sorted(data.columns),
+    default=[
+        'AMT_CREDIT',
+        'BURO_DAYS_CREDIT_ENDDATE_MAX',
+        'DAYS_BIRTH',
+        'DAYS_EMPLOYED',
+        'EXT_SOURCE_2',
+        'EXT_SOURCE_3',
+        'NAME_EDUCATION_TYPE_Higher education',
+        'PAYMENT_RATE',
+        'PREV_CNT_PAYMENT_MEAN',
+        'PREV_NAME_YIELD_GROUP_high_MEAN'],
+    max_selections=10)
 
-# get prediction
-url = 'http://127.0.0.1:3000/predict'
+# ======================================================================================= #
+# PREDICTION 
+
+# get prediction from API
+url = "http://127.0.0.1:3000/predict"
 # url= 'https://elena-openclassrooms-predict.herokuapp.com/predict'
 client_id = str(selected_client)
 prediction = requests.post(url, data=client_id)
 
+st.write("## Prédiction")
+
+# insertion of 2 containers
 col1, col2 = st.columns(2)
 
-# Showing client state and probability 
+# showing client state and credit repayment probability 
 if int(prediction.text) > 50:
-    client_state = 'Client peu risqué'
-    approval = 'Accorder le crédit'
+    client_state = "Client peu risqué'"
+    approval = "Accorder le crédit"
 else:
-    client_state = 'Client à risque de défaut'
-    approval = 'Refuser le crédit'
+    client_state = "Client à risque de défaut"
+    approval = "Refuser le crédit"
+col1.subheader("Client"  + client_id)
+col1.write("Probabilité de remboursement: " + prediction.text +"%")
+col1.write("Etat client: **" + client_state + "**")
+col1.markdown(
+    "<span style=font-size:25px>**" + approval + "**",
+    unsafe_allow_html=True)
 
-col1.subheader("""Client """ + client_id)
-col1.write("""Probabilité de remboursement: """ + prediction.text +"%")
-col1.write("""Etat client: **""" + client_state + """**""")
-col1.write("""**""" + approval + """**""")
-
-# Gauge graph
-fig = go.Figure(go.Indicator(
-    mode = "gauge+number",
-    value = int(prediction.text),
-    number= { 'suffix': "%", 'font':{'color':'dimgrey'}},
-    domain = {'x': [0, 1], 'y': [0, 1]},
-    title = {'text': "Probabilité de remboursement", 'font':{'color':'dimgrey' }},
-    gauge = {
-        'axis': {'range': [None, 100], 'tickwidth': 1, 'tickcolor': "dimgrey", 'tickfont':{'color':'dimgrey' }},
+# gauge graph
+gauge_graph = go.Figure(
+    go.Indicator(
+        mode="gauge+number",
+        value=int(prediction.text),
+        number={ 'suffix': "%", 'font':{'color':'dimgrey'}},
+        domain={'x': [0, 1], 'y': [0, 1]},
+        title={
+            'text': "Probabilité de remboursement",
+            'font':{'color':'dimgrey' }},
+        gauge={
+            'axis': {
+                'range': [None, 100],
+                'tickwidth': 1, 'tickcolor': "dimgrey", 'tickfont':{'color':'dimgrey' }},
         'bar': {'color': "lightgrey"},
         'steps': [
             {'range': [0, 50], 'color': 'red'},
             {'range': [50, 100], 'color': 'green'}],
     }))
-fig.update_layout(
+gauge_graph.update_layout(
     margin=dict(l=30, t=50, r=30, b=0),
     height=250,
     width=300
