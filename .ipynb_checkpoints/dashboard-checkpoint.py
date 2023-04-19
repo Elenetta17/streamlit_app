@@ -7,53 +7,69 @@ import requests
 import shap
 import streamlit as st
 
-variables=pd.read_csv('description_variables.csv', sep = '\t', index_col=0)
+# ======================================================================================= #
+# FUNCTIONS AND VARIABLES DEFINITIONS
 
-@st.cache_data # caching
+@st.cache_data  # caching
 def load_dataframe(path):
     """This function take as input the path(string) of a csv
-    file and return the dataframe"""
+    file and returns the dataframe"""
     data = pd.read_csv(path, index_col=0)
     return data
 
-@st.cache_data  # 👈 Add the caching decorator
+
+@st.cache_data  # caching
 def load_shap_values(path, df):
-    """This function take as input the path(string) of a shap explainer
-    and a dataframe and return the explainer and the correspondent shap
+    """This function take as input the path (string) of a shap explainer
+    and a dataframe. It return the explainer and the corresponding shap
     values of the dataframe"""
     explainer = pickle.load(open(path, 'rb'))
     shap_values = explainer.shap_values(df)
     return explainer, shap_values
 
-@st.cache_data # caching
+
+@st.cache_data  # caching
 def load_client_list(data):
-    """This function take as input ta dataframe
-    and return the index in ascending order"""
+    """This function take as input a dataframe
+    and returns the index in ascending order"""
     return sorted(data.index)
 
-# chargement dataframe
-data = load_dataframe('kaggle_reduced.csv') 
 
-# chargement explainer et shap values
+# loading the dataframe
+data = load_dataframe("test_kaggle_reduced.csv")
+
+# loading the features descriptions
+features_description = pd.read_csv(
+                        'description_variables.csv',
+                        sep='\t',
+                        index_col=0)
+
+# loading explainer and shap values
 explainer, shap_values = load_shap_values('explainer.pkl', data)
 
-shap_object = shap.Explanation(base_values = explainer.expected_value[0],
-values = shap_values[0],
-feature_names = data.columns,
-data = data)
+# initialization shap object to make waterfall plots
+shap_object = shap.Explanation(
+    base_values=explainer.expected_value[0],
+    values=shap_values[0],
+    feature_names=data.columns,
+    data=data)
 
 # categorical variables
-categorical_columns=[
-'FLAG_DOCUMENT_3','NAME_EDUCATION_TYPE_Higher education',
- 'NAME_EDUCATION_TYPE_Secondary / secondary special','PREV_NAME_CLIENT_TYPE_New_MEAN',
- 'PREV_NAME_CONTRACT_STATUS_Canceled_MEAN',
- 'PREV_NAME_CONTRACT_STATUS_Refused_MEAN',
- 'PREV_NAME_CONTRACT_TYPE_Consumer loans_MEAN',
- 'PREV_NAME_PORTFOLIO_Cash_MEAN',
- 'PREV_NAME_PORTFOLIO_POS_MEAN',
- 'PREV_NAME_YIELD_GROUP_high_MEAN',
- 'PREV_NAME_YIELD_GROUP_low_normal_MEAN',
- 'PREV_NAME_YIELD_GROUP_middle_MEAN',]
+categorical_columns = [
+    'FLAG_DOCUMENT_3',
+    'NAME_EDUCATION_TYPE_Higher education',
+    'NAME_EDUCATION_TYPE_Secondary / secondary special',
+    'PREV_NAME_CLIENT_TYPE_New_MEAN',
+    'PREV_NAME_CONTRACT_STATUS_Canceled_MEAN',
+    'PREV_NAME_CONTRACT_STATUS_Refused_MEAN',
+    'PREV_NAME_CONTRACT_TYPE_Consumer loans_MEAN',
+    'PREV_NAME_PORTFOLIO_Cash_MEAN',
+    'PREV_NAME_PORTFOLIO_POS_MEAN',
+    'PREV_NAME_YIELD_GROUP_high_MEAN',
+    'PREV_NAME_YIELD_GROUP_low_normal_MEAN',
+    'PREV_NAME_YIELD_GROUP_middle_MEAN'
+]
+# ======================================================================================= #
 
 # application title
 st.write("""
@@ -135,12 +151,12 @@ st.write("""
 # list the values of selected features
 for feature in features_to_show:
     if feature not in categorical_columns:
-        st.markdown("""**"""+feature+""": """ + str(round(data.loc[selected_client, feature], 2))+ '** - <span style=font-size:14px>' + variables.loc[feature, 'Description'], unsafe_allow_html=True)
+        st.markdown("""**"""+feature+""": """ + str(round(data.loc[selected_client, feature], 2))+ '** - <span style=font-size:14px>' + features_description.loc[feature, 'Description'], unsafe_allow_html=True)
     else:  # if feature is categorical, display Yes or No
         if data.loc[selected_client, feature] > 0.5:
-            st.markdown("""**"""+feature+""": Oui**"""+ ' - <span style=font-size:14px>' + variables.loc[feature, 'Description'], unsafe_allow_html=True)
+            st.markdown("""**"""+feature+""": Oui**"""+ ' - <span style=font-size:14px>' + features_description.loc[feature, 'Description'], unsafe_allow_html=True)
         else:
-            st.markdown("""**"""+feature+""":** Non"""  '<span style=font-size:14px>(' + variables.loc[feature, 'Description'] +')', unsafe_allow_html=True) 
+            st.markdown("""**"""+feature+""":** Non"""  '<span style=font-size:14px>(' + features_description.loc[feature, 'Description'] +')', unsafe_allow_html=True) 
 
             
 #=======================================================================#
