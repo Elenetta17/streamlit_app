@@ -44,17 +44,16 @@ data = data)
 
 # categorical variables
 categorical_columns=[
-    'PREV_NAME_YIELD_GROUP_high_MEAN',
-    'NAME_EDUCATION_TYPE_Higher education',
-    'PREV_NAME_CONTRACT_TYPE_Cash loans_MEAN',
-    'PREV_NAME_CONTRACT_TYPE_Consumer loans_MEAN',
-    'PREV_NAME_CONTRACT_STATUS_Refused_MEAN',
-    'PREV_NAME_CLIENT_TYPE_New_MEAN',
-    'PREV_NAME_PORTFOLIO_POS_MEAN',
-    'PREV_NAME_YIELD_GROUP_high_MEAN',
-    'PREV_NAME_YIELD_GROUP_low_normal_MEAN',
-    'PREV_NAME_YIELD_GROUP_middle_MEAN',
-    'PREV_PRODUCT_COMBINATION_Cash_MEAN']
+'FLAG_DOCUMENT_3','NAME_EDUCATION_TYPE_Higher education',
+ 'NAME_EDUCATION_TYPE_Secondary / secondary special','PREV_NAME_CLIENT_TYPE_New_MEAN',
+ 'PREV_NAME_CONTRACT_STATUS_Canceled_MEAN',
+ 'PREV_NAME_CONTRACT_STATUS_Refused_MEAN',
+ 'PREV_NAME_CONTRACT_TYPE_Consumer loans_MEAN',
+ 'PREV_NAME_PORTFOLIO_Cash_MEAN',
+ 'PREV_NAME_PORTFOLIO_POS_MEAN',
+ 'PREV_NAME_YIELD_GROUP_high_MEAN',
+ 'PREV_NAME_YIELD_GROUP_low_normal_MEAN',
+ 'PREV_NAME_YIELD_GROUP_middle_MEAN',]
 
 # application title
 st.write("""
@@ -63,7 +62,7 @@ st.write("""
 ### SIDEBAR
 # add client list to sidebar
 client_list = load_client_list(data)
-selected_client = st.sidebar.selectbox('Clients_id', client_list)
+selected_client = st.sidebar.selectbox('Sélectionner l\'ID client', client_list)
 
 # add features to sidebar
 features_to_show = st.sidebar.multiselect('Variables', sorted(data.columns),
@@ -152,14 +151,30 @@ st.write("""
 
 st.write("""
 ###  Caractéristiques influençant le score du client""")
+
 st_shap(shap.plots.waterfall(shap_object[data.index.get_loc(selected_client)], max_display=10),
-         width=800, height=300
-)
+         width=800, height=400
+ )
+
+shap_data = pd.DataFrame(shap_values[0][data.index.get_loc(selected_client)],
+             index=explainer.data_feature_names, 
+             columns=['SHAP VALUE']
+            ).sort_values(by=
+                          'SHAP VALUE',
+                           key=abs,
+                           ascending=False).head(10)
+
+with st.expander("Voir l'explication textuelle"):
+    st.write("""Valeurs shap des variables""")
+    for variable in shap_data.index:
+        st.write(variable + ": " + str(round(shap_data.loc[variable, 'SHAP VALUE'], 2)))
 
 # Store the list of columns
                                  
 st.write("""
-## Positionnement du client par rapport à l'ensamble de clients """)
+## Positionnement du client par rapport à l'ensemble de clients """)
+st.markdown('<span style=font-size:15px> La ligne rouge corréspond à la valeur du client séléctionné', unsafe_allow_html=True)
+
 # boxplots
 fig, ax = plt.subplots((len(features_to_show)+1)//2, 2, figsize=(15, 15))
 count = 1
@@ -167,7 +182,7 @@ for col in features_to_show:
     plt.subplot((len(features_to_show)+1)//2, 2, count)
     plt.title(col)
     plt.hist(data[col])
-    plt.axvline(data.loc[selected_client, col], color='red', linestyle='dashed', linewidth=2)
+    plt.axvline(data.loc[selected_client, col], color='red', linestyle='dashed', linewidth=4)
     min_ylim, max_ylim = plt.ylim()
     #plt.text(data.loc[selected_client, col], max_ylim*0.9, "CLIENT")
     count += 1
@@ -175,3 +190,17 @@ if len(features_to_show)%2 !=0:
     fig.delaxes(ax[(len(features_to_show)+1)//2-1][1])
 plt.tight_layout()
 st.pyplot(fig)
+
+with st.expander("Voir l'explication textuelle"):
+    for col in features_to_show:
+        st.markdown("""**"""+ col +"""**""")
+        st.markdown("""Moyenne: """ + str(round(data[col].mean(), 2)), unsafe_allow_html=True)
+        st.markdown("""Médiane: """ + str(round(data[col].median(), 2)), unsafe_allow_html=True)
+        if col in categorical_columns:
+            st.markdown(
+            """Pourcentage de clients avec une valéure = Oui: """ + str(round
+               ( (data[data[col]>0.5]).shape[0]*100/data.shape[0], 2)), unsafe_allow_html=True)
+        else:    
+            st.markdown(
+            """Pourcentage de clients avec une valéure supérieure à celle du client: """ + str(round
+               ( (data[data[col]>data.loc[selected_client, col]]).shape[0]*100/data.shape[0])), unsafe_allow_html=True)
