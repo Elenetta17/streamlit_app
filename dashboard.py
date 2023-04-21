@@ -107,8 +107,8 @@ features_to_show = st.sidebar.multiselect(
 # PREDICTION 
 
 # get prediction from API
-url = "http://127.0.0.1:3000/predict"
-# url= 'https://elena-openclassrooms-predict.herokuapp.com/predict'
+# url = "http://127.0.0.1:3000/predict"
+url= 'https://elena-openclassrooms-predict.herokuapp.com/predict'
 client_id = str(selected_client)
 prediction = requests.post(url, data=client_id)
 
