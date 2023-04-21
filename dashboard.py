@@ -88,7 +88,7 @@ selected_client = st.sidebar.selectbox(
 
 # add features list to sidebar
 features_to_show = st.sidebar.multiselect(
-    '**Variables**',
+    "**Variables**",
     sorted(data.columns),
     default=[
         'AMT_CREDIT',
@@ -117,15 +117,15 @@ st.write("## Prédiction")
 # insertion of 2 containers
 col1, col2 = st.columns(2)
 
-# showing client state and credit repayment probability 
+# showing client state and credit repayment probability
 if int(prediction.text) > 50:
-    client_state = "Client peu risqué'"
+    client_state = "Client peu risqué"
     approval = "Accorder le crédit"
 else:
     client_state = "Client à risque de défaut"
     approval = "Refuser le crédit"
-col1.subheader("Client"  + client_id)
-col1.write("Probabilité de remboursement: " + prediction.text +"%")
+col1.subheader("Client " + client_id)
+col1.write("Probabilité de remboursement: " + prediction.text + "%")
 col1.write("Etat client: **" + client_state + "**")
 col1.markdown(
     "<span style=font-size:25px>**" + approval + "**",
@@ -136,44 +136,50 @@ gauge_graph = go.Figure(
     go.Indicator(
         mode="gauge+number",
         value=int(prediction.text),
-        number={ 'suffix': "%", 'font':{'color':'dimgrey'}},
-        domain={'x': [0, 1], 'y': [0, 1]},
+        number={"suffix": "%", "font": {"color": "dimgrey"}},
+        domain={"x": [0, 1], "y": [0, 1]},
         title={
-            'text': "Probabilité de remboursement",
-            'font':{'color':'dimgrey' }},
+            "text": "Probabilité de remboursement",
+            "font": {"color": "dimgrey"}},
         gauge={
-            'axis': {
-                'range': [None, 100],
-                'tickwidth': 1, 'tickcolor': "dimgrey", 'tickfont':{'color':'dimgrey' }},
-        'bar': {'color': "lightgrey"},
-        'steps': [
-            {'range': [0, 50], 'color': 'red'},
-            {'range': [50, 100], 'color': 'green'}],
+            "axis": {
+                "range": [None, 100],
+                "tickwidth": 1,
+                "tickcolor": "dimgrey",
+                "tickfont": {"color": "dimgrey"}},
+            "bar": {"color": "lightgrey"},
+            "steps": [
+                {"range": [0, 50], "color": "red"},
+                {"range": [50, 100], "color": "green"}],
     }))
 gauge_graph.update_layout(
     margin=dict(l=30, t=50, r=30, b=0),
     height=250,
     width=300
-    #margin={'b': 70},
-    #height=150,
 )
-col2.plotly_chart(fig)
-#=======================================================================#
-### CLIENT INFO ###
+col2.plotly_chart(gauge_graph)
 
-st.write("""
-## Informations relatives au client """ + str(selected_client))
+# ======================================================================================= #
+### CLIENT'S INFORMATIONS ###
+
+st.write("## Informations relatives au client " + str(selected_client))
 
 # list the values of selected features
 for feature in features_to_show:
     if feature not in categorical_columns:
-        st.markdown("""**"""+feature+""": """ + str(round(data.loc[selected_client, feature], 2))+ '** - <span style=font-size:14px>' + features_description.loc[feature, 'Description'], unsafe_allow_html=True)
+        st.markdown("**" + feature + ": " + str(
+                round(data.loc[selected_client, feature], 2)
+            ) + "** <span style=font-size:14px>" + features_description.loc[feature, "Description"],
+                        unsafe_allow_html=True)
     else:  # if feature is categorical, display Yes or No
         if data.loc[selected_client, feature] > 0.5:
-            st.markdown("""**"""+feature+""": Oui**"""+ ' - <span style=font-size:14px>' + features_description.loc[feature, 'Description'], unsafe_allow_html=True)
+            st.markdown(
+                "**"+feature+": Oui**"+ " - <span style=font-size:14px>" + features_description.loc[
+                    feature, 'Description'], unsafe_allow_html=True)
         else:
-            st.markdown("""**"""+feature+""":** Non"""  '<span style=font-size:14px>(' + features_description.loc[feature, 'Description'] +')', unsafe_allow_html=True) 
-
+            st.markdown(
+                "**"+feature+": Non**"+ " - <span style=font-size:14px>" + features_description.loc[
+                    feature, 'Description'], unsafe_allow_html=True)
             
 #=======================================================================#
 # MODEL EXPLICATION
@@ -183,6 +189,7 @@ st.write("""
 
 st.write("""
 ###  Caractéristiques influençant le score du client""")
+st.markdown("<span style=font-size:14px>Les valeurs positives correspondent à une plus grande probabilité de remboursement, les valeurs négatives à une plus petite probabilité de remboursement", unsafe_allow_html=True)
 
 st_shap(shap.plots.waterfall(shap_object[data.index.get_loc(selected_client)], max_display=10),
          width=800, height=400
@@ -196,8 +203,7 @@ shap_data = pd.DataFrame(shap_values[0][data.index.get_loc(selected_client)],
                            key=abs,
                            ascending=False).head(10)
 
-with st.expander("Voir l'explication textuelle"):
-    st.write("""Valeurs shap des variables""")
+with st.expander("Résumé de l'explication"):
     for variable in shap_data.index:
         st.write(variable + ": " + str(round(shap_data.loc[variable, 'SHAP VALUE'], 2)))
 
@@ -223,16 +229,16 @@ if len(features_to_show)%2 !=0:
 plt.tight_layout()
 st.pyplot(fig)
 
-with st.expander("Voir l'explication textuelle"):
+with st.expander("Résumé"):
     for col in features_to_show:
         st.markdown("""**"""+ col +"""**""")
         st.markdown("""Moyenne: """ + str(round(data[col].mean(), 2)), unsafe_allow_html=True)
         st.markdown("""Médiane: """ + str(round(data[col].median(), 2)), unsafe_allow_html=True)
         if col in categorical_columns:
             st.markdown(
-            """Pourcentage de clients avec une valéure = Oui: """ + str(round
-               ( (data[data[col]>0.5]).shape[0]*100/data.shape[0], 2)), unsafe_allow_html=True)
+            """Pourcentage de clients avec une valeur = Oui: """ + str(round
+               ( (data[data[col]>0.5]).shape[0]*100/data.shape[0], 2))+"%", unsafe_allow_html=True)
         else:    
             st.markdown(
-            """Pourcentage de clients avec une valéure supérieure à celle du client: """ + str(round
-               ( (data[data[col]>data.loc[selected_client, col]]).shape[0]*100/data.shape[0])), unsafe_allow_html=True)
+            """Pourcentage de clients avec une valeur supérieure à celle du client: """ + str(round
+               ( (data[data[col]>data.loc[selected_client, col]]).shape[0]*100/data.shape[0]))+"%", unsafe_allow_html=True)
