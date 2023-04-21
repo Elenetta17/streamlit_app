@@ -23,9 +23,10 @@ def load_shap_values(path, df):
     """This function take as input the path (string) of a shap explainer
     and a dataframe. It return the explainer and the corresponding shap
     values of the dataframe"""
-    explainer = pickle.load(open(path, 'rb'))
-    shap_values = explainer.shap_values(df)
-    return explainer, shap_values
+    with open(path, 'rb') as explanation_model:
+        explainer = pickle.load(explanation_model)
+        shap_values = explainer.shap_values(df)
+        return explainer, shap_values
 
 
 @st.cache_data  # caching
@@ -184,61 +185,94 @@ for feature in features_to_show:
 #=======================================================================#
 # MODEL EXPLICATION
 
-st.write("""
-## Explication du modèle""")
+st.write("## Explication du modèle")
+st.write("###  Caractéristiques influençant le score du client")
+st.markdown(
+    "<span style=font-size:14px>Les valeurs positives correspondent à une plus grande probabilité de remboursement, les valeurs négatives à une plus petite probabilité de remboursement",
+    unsafe_allow_html=True)
 
-st.write("""
-###  Caractéristiques influençant le score du client""")
-st.markdown("<span style=font-size:14px>Les valeurs positives correspondent à une plus grande probabilité de remboursement, les valeurs négatives à une plus petite probabilité de remboursement", unsafe_allow_html=True)
+# show the waterfall plot
+st_shap(
+    shap.plots.waterfall(
+        shap_object[data.index.get_loc(selected_client)],
+        max_display=10),
+    width=800,
+    height=400
+)
 
-st_shap(shap.plots.waterfall(shap_object[data.index.get_loc(selected_client)], max_display=10),
-         width=800, height=400
- )
+# dataframe most important features
+shap_data = pd.DataFrame(
+    shap_values[0][data.index.get_loc(selected_client)],
+    index=explainer.data_feature_names,
+    columns=["SHAP VALUE"]
+).sort_values(by="SHAP VALUE",
+              key=abs,
+              ascending=False).head(10)
 
-shap_data = pd.DataFrame(shap_values[0][data.index.get_loc(selected_client)],
-             index=explainer.data_feature_names, 
-             columns=['SHAP VALUE']
-            ).sort_values(by=
-                          'SHAP VALUE',
-                           key=abs,
-                           ascending=False).head(10)
-
+# text summary of shap values
 with st.expander("Résumé de l'explication"):
-    for variable in shap_data.index:
-        st.write(variable + ": " + str(round(shap_data.loc[variable, 'SHAP VALUE'], 2)))
+    for feature in shap_data.index:
+        st.write(
+            feature + ": " + str(
+                round(shap_data.loc[feature, 'SHAP VALUE'], 2
+                     )
+            )
+        )
+         
+#=======================================================================#
+# FEATURES DISTRIBUTIONS 
 
-# Store the list of columns
-                                 
-st.write("""
-## Positionnement du client par rapport à l'ensemble de clients """)
-st.markdown('<span style=font-size:15px> La ligne rouge corréspond à la valeur du client séléctionné', unsafe_allow_html=True)
+st.write("## Positionnement du client par rapport à l'ensemble de clients")
+st.markdown(
+    '<span style=font-size:15px>La ligne rouge corréspond à la valeur du client séléctionné',
+    unsafe_allow_html=True)
 
-# boxplots
-fig, ax = plt.subplots((len(features_to_show)+1)//2, 2, figsize=(15, 15))
+# histograms
+fig, ax = plt.subplots(
+    (len(features_to_show)+1)//2,
+    2,
+    figsize=(15, 15)
+)
 count = 1
-for col in features_to_show:
-    plt.subplot((len(features_to_show)+1)//2, 2, count)
-    plt.title(col)
-    plt.hist(data[col])
-    plt.axvline(data.loc[selected_client, col], color='red', linestyle='dashed', linewidth=4)
+for feature in features_to_show:
+    plt.subplot(
+        (len(features_to_show)+1)//2,
+        2,
+        count
+    )
+    plt.title(feature)
+    plt.hist(data[feature])
+    plt.axvline(  # add red line to display client value
+        data.loc[selected_client, feature],
+        color="red",
+        linestyle="dashed",
+        linewidth=4
+    )
     min_ylim, max_ylim = plt.ylim()
-    #plt.text(data.loc[selected_client, col], max_ylim*0.9, "CLIENT")
     count += 1
-if len(features_to_show)%2 !=0:
-    fig.delaxes(ax[(len(features_to_show)+1)//2-1][1])
+if len(features_to_show)%2 != 0:
+    fig.delaxes(ax[(len(features_to_show) + 1)// 2 - 1][1])
 plt.tight_layout()
 st.pyplot(fig)
 
+# text summary of distributions
 with st.expander("Résumé"):
-    for col in features_to_show:
-        st.markdown("""**"""+ col +"""**""")
-        st.markdown("""Moyenne: """ + str(round(data[col].mean(), 2)), unsafe_allow_html=True)
-        st.markdown("""Médiane: """ + str(round(data[col].median(), 2)), unsafe_allow_html=True)
-        if col in categorical_columns:
+    for feature in features_to_show:
+        st.markdown("**" + feature + "**")
+        st.markdown(
+            "Moyenne: " + str(round(data[feature].mean(), 2)),
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            "Médiane: " + str(round(data[feature].median(), 2)),
+            unsafe_allow_html=True)
+        if feature in categorical_columns:
             st.markdown(
-            """Pourcentage de clients avec une valeur = Oui: """ + str(round
-               ( (data[data[col]>0.5]).shape[0]*100/data.shape[0], 2))+"%", unsafe_allow_html=True)
-        else:    
+            "Pourcentage de clients avec une valeur = Oui: " + str(round
+               ((data[data[feature] > 0.5]).shape[0]*100/data.shape[0], 2)) + "%",
+            unsafe_allow_html=True)
+        else:
             st.markdown(
-            """Pourcentage de clients avec une valeur supérieure à celle du client: """ + str(round
-               ( (data[data[col]>data.loc[selected_client, col]]).shape[0]*100/data.shape[0]))+"%", unsafe_allow_html=True)
+            "Pourcentage de clients avec une valeur supérieure à celle du client: " + str(round
+               ((data[data[feature] > data.loc[selected_client, feature]]).shape[0]*100/data.shape[0])) + "%",
+            unsafe_allow_html=True)
