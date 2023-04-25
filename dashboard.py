@@ -144,7 +144,7 @@ gauge_graph = go.Figure(
     go.Indicator(
         mode="gauge+number",
         value=int(prediction.text),
-        number={"suffix": "%", "font": {"color": "dimgrey"}},
+        number={"suffix": "%", "font": {"color": gauge_font_color}},
         domain={"x": [0, 1], "y": [0, 1]},
         title={
             "text": "Probabilité de remboursement",
@@ -154,7 +154,7 @@ gauge_graph = go.Figure(
                 "range": [None, 100],
                 "tickwidth": 1,
                 "tickcolor": "dimgrey",
-                "tickfont": {"color": gauge_font_color}},
+                "tickfont": {"color": "dimgrey"}},
             "bar": {"color": "lightgrey"},
             "steps": [
                 {"range": [0, 50], "color": "red"},
