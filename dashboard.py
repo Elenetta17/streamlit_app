@@ -7,6 +7,10 @@ import requests
 import shap
 import streamlit as st
 
+# page title
+st.set_page_config(
+        page_title="Dashboard Scoring Credit",
+)
 # ======================================================================================= #
 # FUNCTIONS AND VARIABLES DEFINITIONS
 
@@ -22,7 +26,7 @@ def load_dataframe(path):
 def load_shap_values(path, df):
     """This function take as input the path (string) of a shap explainer
     and a dataframe. It return the explainer and the corresponding shap
-    values of the dataframe"""
+    values"""
     with open(path, 'rb') as explanation_model:
         explainer = pickle.load(explanation_model)
         shap_values = explainer.shap_values(df)
