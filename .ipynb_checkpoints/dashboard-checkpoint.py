@@ -168,26 +168,28 @@ gauge_graph.update_layout(
 col2.plotly_chart(gauge_graph)
 
 # ======================================================================================= #
-### CLIENT'S INFORMATIONS ###
+# CLIENT'S INFORMATIONS 
 
 st.write("## Informations relatives au client " + str(selected_client))
 
 # list the values of selected features
 for feature in features_to_show:
     if feature not in categorical_columns:
-        st.markdown("**" + feature + ": " + str(
+        st.markdown("**" + features_description.loc[feature, "Description"] + ": " + str(
                 round(data.loc[selected_client, feature], 2)
-            ) + "** <span style=font-size:14px>" + features_description.loc[feature, "Description"],
+            ) + "** <span style=font-size:14px> (" + feature + ")",
                         unsafe_allow_html=True)
     else:  # if feature is categorical, display Yes or No
         if data.loc[selected_client, feature] > 0.5:
             st.markdown(
-                "**"+feature+": Oui**"+ " - <span style=font-size:14px>" + features_description.loc[
-                    feature, 'Description'], unsafe_allow_html=True)
+                "**" + features_description.loc[
+                    feature, "Description"] + ": Oui**" + " - <span style=font-size:14px> (" + feature + ")",
+                unsafe_allow_html=True)
         else:
             st.markdown(
-                "**"+feature+": Non**"+ " - <span style=font-size:14px>" + features_description.loc[
-                    feature, 'Description'], unsafe_allow_html=True)
+                "**" + features_description.loc[
+                    feature, "Description"] + ": Non**" + " - <span style=font-size:14px> (" + feature + ")",
+                unsafe_allow_html=True)
             
 #=======================================================================#
 # MODEL EXPLICATION
@@ -275,7 +277,7 @@ with st.expander("Résumé"):
             unsafe_allow_html=True)
         if feature in categorical_columns:
             st.markdown(
-            "Pourcentage de clients avec une valeur = Oui: " + str(round
+            features_description.loc[feature, "Distribution"] + ": " + str(round
                ((data[data[feature] > 0.5]).shape[0]*100/data.shape[0], 2)) + "%",
             unsafe_allow_html=True)
         else:
