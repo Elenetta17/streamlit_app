@@ -113,7 +113,7 @@ features_to_show = st.sidebar.multiselect(
 
 # get prediction from API
 # url = "http://127.0.0.1:3000/predict"
-url= 'https://elena-openclassrooms-predict.herokuapp.com/predict'
+url= "https://elena-openclassrooms-predict.herokuapp.com/predict"
 client_id = str(selected_client)
 prediction = requests.post(url, data=client_id)
 
@@ -126,9 +126,12 @@ col1, col2 = st.columns(2)
 if int(prediction.text) > 50:
     client_state = "Client peu risqué"
     approval = "Accorder le crédit"
+    gauge_font_color = "green"
 else:
     client_state = "Client à risque de défaut"
     approval = "Refuser le crédit"
+    gauge_font_color = "red"
+    
 col1.subheader("Client " + client_id)
 col1.write("Probabilité de remboursement: " + prediction.text + "%")
 col1.write("Etat client: **" + client_state + "**")
@@ -151,7 +154,7 @@ gauge_graph = go.Figure(
                 "range": [None, 100],
                 "tickwidth": 1,
                 "tickcolor": "dimgrey",
-                "tickfont": {"color": "dimgrey"}},
+                "tickfont": {"color": gauge_font_color}},
             "bar": {"color": "lightgrey"},
             "steps": [
                 {"range": [0, 50], "color": "red"},
