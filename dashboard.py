@@ -133,8 +133,8 @@ else:
     gauge_font_color = "red"
     
 col1.subheader("Client " + client_id)
-col1.write("Probabilité de remboursement: " + prediction.text + "%")
-col1.write("Etat client: **" + client_state + "**")
+col1.write("##### Probabilité de remboursement: **" + prediction.text + "%**")
+col1.write("##### Etat client: **" + client_state + "**")
 col1.markdown(
     "<span style=font-size:25px>**" + approval + "**",
     unsafe_allow_html=True)
