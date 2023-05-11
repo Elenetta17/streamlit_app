@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import requests
 import shap
 import streamlit as st
+import numpy as np
 
 # page title
 st.set_page_config(
@@ -123,7 +124,7 @@ st.write("## Prédiction")
 col1, col2 = st.columns(2)
 
 # showing client state and credit repayment probability
-if int(prediction.text) > 50:
+if np.int64(prediction.text) > 50:
     client_state = "Client peu risqué"
     approval = "Accorder le crédit"
     gauge_font_color = "green"
