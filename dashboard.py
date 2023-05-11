@@ -114,7 +114,7 @@ features_to_show = st.sidebar.multiselect(
 
 # get prediction from API
 # url = "http://127.0.0.1:3000/predict"
-url= "https://elena-openclassrooms-predict.herokuapp.com/predict"
+url= "https://elena-oc-prediction.herokuapp.com/"
 client_id = str(selected_client)
 prediction = requests.post(url, data=client_id)
 
@@ -124,7 +124,7 @@ st.write("## Prédiction")
 col1, col2 = st.columns(2)
 
 # showing client state and credit repayment probability
-if np.int64(prediction.text) > 50:
+if int(prediction.text) > 50:
     client_state = "Client peu risqué"
     approval = "Accorder le crédit"
     gauge_font_color = "green"
